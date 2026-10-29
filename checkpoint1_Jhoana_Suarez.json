@@ -1,0 +1,188 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Rol:\n\nEres un asistente especializado en la gestión e ingesta de solicitudes para el módulo de Mantenimiento Preventivo (PM). Tu función principal es recibir, validar y registrar solicitudes de alta y activación de planes de mantenimiento preventivo y rutinas.\n\nObjetivo:\n\nCapturar y registrar eficientemente:\n\nSolicitudes de Alta de nuevos planes de mantenimiento preventivo.\n\nSolicitudes de Activación de planes existentes o nuevos.\n\nRegistro detallado de Rutinas de mantenimiento asociadas.\n\nReglas y Restricciones:\n\nUnicidad y No Duplicados: Antes de registrar un nuevo plan o rutina, verifica que no exista previamente. Queda estrictamente prohibido crear registros duplicados.\n\nValidación de Activación:\n\nPara activar un plan, es obligatorio contar con la Fecha de Inicio/Activación.\n\nSi la solicitud de activación no incluye la fecha, deja el campo en blanco y solicita al cliente o usuario la fecha exacta en la que desea que el plan comience a regir.\n\nTono: Profesional, estructurado y enfocado en el rigor operativo.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        384,
+        0
+      ],
+      "id": "c1ede337-8392-4aa4-b95c-810ae65ce46e",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 5,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "[PROPÓSITO DE NEGOCIO]: Útil para registrar y dar de alta nuevas solicitudes de mantenimiento preventivo y rutinas operativas validando la unicidad del registro.\n\n[CUÁNDO ACTIVAR - CRITERIOS RIGUROSOS]:\n- Activar ÚNICAMENTE cuando el usuario confirme explícitamente la creación o alta de un plan/rutina con todos sus datos operativos (Tag/Equipo, Nombre de la rutina, Frecuencia).\n- Activar si se proporciona una orden directa de registro como \"Guarda este plan\", \"Registra la rutina\", \"Da de alta la siguiente frecuencia\".\n\n[CUÁNDO NO ACTIVAR]:\n- NO activar si el usuario solo está haciendo consultas, pidiendo revisiones de texto, preguntando por dudas teóricas o pidiendo correcciones de formato.\n- NO activar si falta información crítica para el registro sin haber pedido primero la confirmación al usuario.",
+        "resource": "spreadsheet",
+        "title": "Planes de mantenimiento",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "Nuevo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        544,
+        208
+      ],
+      "id": "113fe269-d140-4273-a617-ebdf10c47e98",
+      "name": "Create spreadsheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yRtkMK66wXIwYz9F",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "jhoanamsuarezm@gmail.com",
+        "subject": "[Reporte de Observabilidad] - Solicitud de Mantenimiento Preventivo",
+        "message": "Hola hemos recibido la solicitud de creación del siguiente plan de mantenimiento",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        32
+      ],
+      "id": "6bf7f0f5-ed10-42a6-a2b1-b69cfce640b1",
+      "name": "Send a message",
+      "webhookId": "c9ab91c6-135d-466e-95bc-1790a3855d9b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s6SrGTDb0GaLt9Su",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        256,
+        208
+      ],
+      "id": "12fa9b06-1195-4c4c-8505-390b76966395",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        64,
+        16
+      ],
+      "id": "f7b9fa48-4402-446d-ab49-9d67104ebbdf",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "s6SrGTDb0GaLt9Su",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create spreadsheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "62bd3dfc-18b8-4324-aac4-131453d8df72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "79115c2ff87aa5440458a1d9866df71019d0fe976df95e119d4932db82abfba1"
+  },
+  "nodeGroups": [],
+  "id": "lYMzYqlDEwApS62G",
+  "tags": []
+}
